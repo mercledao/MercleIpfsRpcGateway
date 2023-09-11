@@ -16,16 +16,17 @@ const auth = (req, res, next) => {
   return res.status(401).send("Unauthorized");
 };
 
-app.use("/", (req, res) => {
+app.get("/", (req, res) => {
   return res.send({ time: Date.now() });
 });
 
-app.use("/ping", (req, res) => {
+app.get("/ping", (req, res) => {
   return res.send("pong");
 });
 
-app.use("/*", auth, (req, res) => {
-  apiProxy.web(req, res, {
+app.use(auth);
+app.all("/*", (req, res) => {
+  return apiProxy.web(req, res, {
     target: "http://localhost:5001",
   });
 });
@@ -33,6 +34,11 @@ app.use("/*", auth, (req, res) => {
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   return res.status(404).send("404: not found");
+});
+
+apiProxy.on("error", (err, req, res) => {
+  console.log(err);
+  res.status(500).send(`Proxy Error\n\n${err}`);
 });
 
 // error handler
