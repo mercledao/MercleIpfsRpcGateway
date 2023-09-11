@@ -1,0 +1,43 @@
+require("dotenv").config();
+const express = require("express");
+const logger = require("morgan");
+const httpProxy = require("http-proxy");
+
+const app = express();
+const apiProxy = httpProxy.createProxyServer();
+
+app.use(logger("dev"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+const auth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader == process.env.IPFS_RPC_API) return next();
+  return res.status(401).send("Unauthorized");
+};
+
+app.use("/", (req, res) => {
+  return res.send({ time: Date.now() });
+});
+
+app.use("/ping", (req, res) => {
+  return res.send("pong");
+});
+
+app.use("/*", auth, (req, res) => {
+  apiProxy.web(req, res, {
+    target: "http://localhost:5001",
+  });
+});
+
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {
+  return res.status(404).send("404: not found");
+});
+
+// error handler
+app.use(function (err, req, res, next) {
+  res.status(404).send(`not found or error:\n\n${err}`);
+});
+
+module.exports = app;
