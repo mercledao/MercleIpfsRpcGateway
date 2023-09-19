@@ -5,6 +5,10 @@ const httpProxy = require("http-proxy");
 
 const app = express();
 const apiProxy = httpProxy.createProxyServer();
+apiProxy.on("error", (err, req, res) => {
+  console.log(err);
+  res.status(500).send(`Proxy Error\n\n${err}`);
+});
 
 app.use(logger("dev"));
 app.use(express.json());
@@ -34,11 +38,6 @@ app.all("/*", (req, res) => {
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   return res.status(404).send("404: not found");
-});
-
-apiProxy.on("error", (err, req, res) => {
-  console.log(err);
-  res.status(500).send(`Proxy Error\n\n${err}`);
 });
 
 // error handler
