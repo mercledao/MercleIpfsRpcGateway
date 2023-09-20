@@ -4,7 +4,11 @@ const logger = require("morgan");
 const httpProxy = require("http-proxy");
 
 const app = express();
-const apiProxy = httpProxy.createProxyServer();
+const apiProxy = httpProxy.createProxyServer({
+  target: "http://localhost:5001",
+  proxyTimeout: 1000 * 60 * 10,
+  timeout: 1000 * 60 * 10,
+});
 apiProxy.on("error", (err, req, res) => {
   console.log(err);
   res.status(500).send(`Proxy Error\n\n${err}`);
@@ -30,9 +34,7 @@ app.get("/ping", (req, res) => {
 
 app.use(auth);
 app.all("/*", (req, res) => {
-  return apiProxy.web(req, res, {
-    target: "http://localhost:5001",
-  });
+  return apiProxy.web(req, res);
 });
 
 // catch 404 and forward to error handler
