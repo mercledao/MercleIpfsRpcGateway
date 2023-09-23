@@ -15,7 +15,7 @@ mv node_modules ..
 mv .vscode ..
 cd ..
 tar cvzf MercleIpfsRpcGateway.tar MercleIpfsRpcGateway/
-scp -i "~/.ssh/daohook-prod.pem" MercleIpfsRpcGateway.tar ec2-user@ec2-3-88-169-14.compute-1.amazonaws.com:/home/ec2-user/
+scp -i "~/.ssh/daohook-prod.pem" MercleIpfsRpcGateway.tar ec2-user@ec2-44-202-245-41.compute-1.amazonaws.com:/home/ec2-user/
 
 mv .git* MercleIpfsRpcGateway
 mv node_modules MercleIpfsRpcGateway
@@ -37,4 +37,4 @@ ssh -i $1 $2 << EOF
 EOF
 }
 
-ssh_run_server "~/.ssh/daohook-prod.pem" ec2-user@ec2-3-88-169-14.compute-1.amazonaws.com
+ssh_run_server "~/.ssh/daohook-prod.pem" ec2-user@ec2-44-202-245-41.compute-1.amazonaws.com
