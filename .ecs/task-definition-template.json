@@ -1,5 +1,5 @@
 {
-  "family": "mercle_backend_family",
+  "family": "<ECR>",
   "taskRoleArn": "<AWS_ROLE>",
   "executionRoleArn": "<AWS_ROLE>",
   "networkMode": "awsvpc",

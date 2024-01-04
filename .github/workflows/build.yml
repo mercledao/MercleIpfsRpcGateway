@@ -136,6 +136,7 @@ jobs:
           IMAGE_URI="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/$ECR:${{ github.sha }}"
 
           sed -e "s|<IMAGE_URI>|$IMAGE_URI|g" .ecs/task-definition-template.json > tmp.json && mv tmp.json task-definition.json
+          sed -e "s|<ECR>|$ECR|g" task-definition.json > tmp.json && mv tmp.json task-definition.json
           sed -e "s|<AWS_ROLE>|$AWS_ROLE|g" task-definition.json > tmp.json && mv tmp.json task-definition.json
           sed -e "s|<CONTAINER_NAME>|$CONTAINER_NAME|g" task-definition.json > tmp.json && mv tmp.json task-definition.json
           sed -e "s|<LOG_GROUP>|$LOG_GROUP|g" task-definition.json > tmp.json && mv tmp.json task-definition.json
