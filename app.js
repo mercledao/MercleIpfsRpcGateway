@@ -18,7 +18,7 @@ app.get("/ping", (req, res) => {
 });
 
 app.get("/ipfs/:cid", (req, res) => {
-  const url = "https://lbIpfsGateway-740070732.us-east-1.elb.amazonaws.com";
+  const url = "https://lbipfsgateway-1970418639.us-east-1.elb.amazonaws.com";
 
   axios({
     method: "get",
