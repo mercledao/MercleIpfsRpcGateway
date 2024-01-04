@@ -34,8 +34,8 @@ jobs:
             [CD_BUCKET_PATH]=ipfsGateway/staging
             [CD_TG_1]=tgIpfsGatewayStaging
             [CD_TG_2]=tgIpfsGatewayStaging2
-            [CD_LB_LISTENER_PROD]=arn:aws:elasticloadbalancing:us-east-1:670732250846:listener/app/lbStagingIpfsGateway/eebf992fa13478cb/100d8c0275acfcbc
-            [SERVICE_LB]=arn:aws:elasticloadbalancing:us-east-1:670732250846:targetgroup/tgIpfsGatewayStaging/ecfac6a377e8a10c
+            [CD_LB_LISTENER_PROD]=arn:aws:elasticloadbalancing:us-east-1:670732250846:listener/app/lbStagingIpfsGateway/eebf992fa13478cb/33bbb646dfb70a4f
+            [SERVICE_LB]=arn:aws:elasticloadbalancing:us-east-1:670732250846:targetgroup/tgIpfsGatewayStaging/30b33a5c2a2ba95d
             [LOG_GROUP]=/ecs/ipfsGatewayStaging
             [LOG_PREFIX]=ipfsgatestaging
             [AWS_ROLE]=arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GithubActionsTaskDefRegister
