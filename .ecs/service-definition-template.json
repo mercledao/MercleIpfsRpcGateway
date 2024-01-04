@@ -28,7 +28,7 @@
     },
     "loadBalancers": [
         {
-            "targetGroupArn": "<SERVICE_LB>",
+            "targetGroupArn": "<CD_LB_TG>",
             "containerName": "<CONTAINER_NAME>",
             "containerPort": 3001
         }

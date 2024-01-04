@@ -35,7 +35,7 @@ jobs:
             [CD_TG_1]=tgIpfsGatewayStaging
             [CD_TG_2]=tgIpfsGatewayStaging2
             [CD_LB_LISTENER_PROD]=arn:aws:elasticloadbalancing:us-east-1:670732250846:listener/app/lbStagingIpfsGateway/2f24a9694b23a460/c9e5adc936cf74be
-            [SERVICE_LB]=arn:aws:elasticloadbalancing:us-east-1:670732250846:targetgroup/tgIpfsGatewayStaging/30b33a5c2a2ba95d
+            [CD_LB_TG]=arn:aws:elasticloadbalancing:us-east-1:670732250846:targetgroup/tgIpfsGatewayStaging/30b33a5c2a2ba95d
             [LOG_GROUP]=/ecs/ipfsGatewayStaging
             [LOG_PREFIX]=ipfsgatestaging
             [AWS_ROLE]=arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GithubActionsTaskDefRegister
@@ -163,7 +163,7 @@ jobs:
             sed -e "s|<SERVICE_NAME>|$ECS_SERVICE_NAME|g" service-definition.json > tmp.json && mv tmp.json service-definition.json
             sed -e "s|<TASK_DEFINITION_ARN>|$TASK_DEF_ARN|g" service-definition.json > tmp.json && mv tmp.json service-definition.json
             sed -e "s|<CONTAINER_NAME>|$CONTAINER_NAME|g" service-definition.json > tmp.json && mv tmp.json service-definition.json
-            sed -e "s|<SERVICE_LB>|$SERVICE_LB|g" service-definition.json > tmp.json && mv tmp.json service-definition.json
+            sed -e "s|<CD_LB_TG>|$CD_LB_TG|g" service-definition.json > tmp.json && mv tmp.json service-definition.json
             
             cat service-definition.json
             # Create the ECS service with CodeDeploy deployment controller
