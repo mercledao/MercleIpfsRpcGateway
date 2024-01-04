@@ -18,7 +18,7 @@ app.get("/ping", (req, res) => {
 });
 
 app.get("/ipfs/:cid", (req, res) => {
-  const url = "https://lbipfsgateway-1970418639.us-east-1.elb.amazonaws.com";
+  const url = "https://ipfsnode.mercle.xyz";
 
   axios({
     method: "get",
@@ -31,13 +31,24 @@ app.get("/ipfs/:cid", (req, res) => {
     })
     .catch((e) => {
       console.error(e);
-      res.status(500).send("Error occurred while fetching data");
+      res.status(500).send("only mercle ipfs supported");
     });
 });
 
 app.get("/ipns/:cid", (req, res) => {
-  // if ipns, get data from db
-  return res.redirect(external.mercle.ipns(req.params.cid));
+  axios({
+    method: "get",
+    url: external.mercle.ipns(req.params.cid),
+    responseType: "stream",
+  })
+    .then((response) => {
+      res.setHeader("Content-Type", response.headers["content-type"]);
+      response.data.pipe(res);
+    })
+    .catch((e) => {
+      console.error(e);
+      res.status(500).send("only mercle ipfs supported");
+    });
 });
 
 // catch 404 and forward to error handler
