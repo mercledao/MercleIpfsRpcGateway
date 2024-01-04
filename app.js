@@ -1,28 +1,13 @@
 require("dotenv").config();
 const express = require("express");
 const logger = require("morgan");
-const httpProxy = require("http-proxy");
+const { external } = require("./constants");
+const axios = require("axios");
 
 const app = express();
-const apiProxy = httpProxy.createProxyServer({
-  target: "http://localhost:5001",
-  proxyTimeout: 1000 * 60 * 10,
-  timeout: 1000 * 60 * 10,
-});
-apiProxy.on("error", (err, req, res) => {
-  console.log(err);
-  res.status(500).send(`Proxy Error\n\n${err}`);
-});
-
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-const auth = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (authHeader == process.env.IPFS_RPC_API) return next();
-  return res.status(401).send("Unauthorized");
-};
 
 app.get("/", (req, res) => {
   return res.send({ time: Date.now() });
@@ -32,9 +17,27 @@ app.get("/ping", (req, res) => {
   return res.send("pong");
 });
 
-app.use(auth);
-app.all("/*", (req, res) => {
-  return apiProxy.web(req, res);
+app.get("/ipfs/:cid", (req, res) => {
+  const url = "https://lbIpfsGateway-740070732.us-east-1.elb.amazonaws.com";
+
+  axios({
+    method: "get",
+    url: `${url}/ipfs/${req.params.cid}`,
+    responseType: "stream",
+  })
+    .then((response) => {
+      res.setHeader("Content-Type", response.headers["content-type"]);
+      response.data.pipe(res);
+    })
+    .catch((e) => {
+      console.error(e);
+      res.status(500).send("Error occurred while fetching data");
+    });
+});
+
+app.get("/ipns/:cid", (req, res) => {
+  // if ipns, get data from db
+  return res.redirect(external.mercle.ipns(req.params.cid));
 });
 
 // catch 404 and forward to error handler
