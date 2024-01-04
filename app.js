@@ -14,7 +14,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/ping", (req, res) => {
-  return res.send("pong 3");
+  return res.send("pong 4");
 });
 
 app.get("/ipfs/:cid", (req, res) => {
