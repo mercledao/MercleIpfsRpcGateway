@@ -12,7 +12,7 @@ name: CI/CD Pipeline to AWS ECS
 on:
   push:
     # branches: [ master, staging ] # Modify as needed for your branches
-    branches: [cicd] # Modify as needed for your branches
+    branches: [cicd_staging, cicd_prod] # Modify as needed for your branches
 
 jobs:
   build-and-deploy:
@@ -22,24 +22,45 @@ jobs:
     steps:
       - name: Setup Variables for Deployment
         run: |
-          declare -A vars=(
-            [ENV_LOCATION]=s3://envmerclebackend/ipfsgateway/staging.json
-            [ECR]=ipfs_gateway
-            [ECS_CLUSTER]=staging_ipfs_gateway_cluster
-            [ECS_SERVICE_NAME]=staging_ipfs_gateway_service_2
-            [CONTAINER_NAME]=staging_ipfs_gateway_container
-            [CODEDEPLOY_APP_NAME]=StagingIpfsGateway
-            [CODEDEPLOY_GROUP_NAME]=StagingIpfsGatewayCDGroup
-            [CD_BUCKET_NAME]=mercleecscodedeploy
-            [CD_BUCKET_PATH]=ipfsGateway/staging
-            [CD_TG_1]=tgIpfsGatewayStaging
-            [CD_TG_2]=tgIpfsGatewayStaging2
-            [CD_LB_LISTENER_PROD]=arn:aws:elasticloadbalancing:us-east-1:670732250846:listener/app/lbStagingIpfsGateway/2f24a9694b23a460/c9e5adc936cf74be
-            [CD_LB_TG]=arn:aws:elasticloadbalancing:us-east-1:670732250846:targetgroup/tgIpfsGatewayStaging/30b33a5c2a2ba95d
-            [LOG_GROUP]=/ecs/ipfsGatewayStaging
-            [LOG_PREFIX]=ipfsgatestaging
-            [AWS_ROLE]=arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GithubActionsTaskDefRegister
-          )
+          if [ "${{ github.ref }}" == "refs/heads/cicd_staging" ]; then
+            declare -A vars=(
+              [ENV_LOCATION]=s3://envmerclebackend/ipfsgateway/staging.json
+              [ECR]=ipfs_gateway
+              [ECS_CLUSTER]=staging_ipfs_gateway_cluster
+              [ECS_SERVICE_NAME]=staging_ipfs_gateway_service_2
+              [CONTAINER_NAME]=staging_ipfs_gateway_container
+              [CODEDEPLOY_APP_NAME]=StagingIpfsGateway
+              [CODEDEPLOY_GROUP_NAME]=StagingIpfsGatewayCDGroup
+              [CD_BUCKET_NAME]=mercleecscodedeploy
+              [CD_BUCKET_PATH]=ipfsGateway/staging
+              [CD_TG_1]=tgIpfsGatewayStaging
+              [CD_TG_2]=tgIpfsGatewayStaging2
+              [CD_LB_LISTENER_PROD]=arn:aws:elasticloadbalancing:us-east-1:670732250846:listener/app/lbStagingIpfsGateway/2f24a9694b23a460/c9e5adc936cf74be
+              [CD_LB_TG]=arn:aws:elasticloadbalancing:us-east-1:670732250846:targetgroup/tgIpfsGatewayStaging/30b33a5c2a2ba95d
+              [LOG_GROUP]=/ecs/ipfsGatewayStaging
+              [LOG_PREFIX]=ipfsgatestaging
+              [AWS_ROLE]=arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GithubActionsTaskDefRegister
+            )
+          elif [ "${{ github.ref }}" == "refs/heads/cicd_prod" ]; then
+            declare -A vars=(
+              [ENV_LOCATION]=s3://envmerclebackend/ipfsgateway/prod.json
+              [ECR]=ipfs_gateway
+              [ECS_CLUSTER]=prod_ipfs_gateway_cluster
+              [ECS_SERVICE_NAME]=prod_ipfs_gateway_service
+              [CONTAINER_NAME]=prod_ipfs_gateway_container
+              [CODEDEPLOY_APP_NAME]=ProdIpfsGateway
+              [CODEDEPLOY_GROUP_NAME]=ProdIpfsGatewayCDGroup
+              [CD_BUCKET_NAME]=mercleecscodedeploy
+              [CD_BUCKET_PATH]=ipfsGateway/prod
+              [CD_TG_1]=tgIpfsGatewayProd
+              [CD_TG_2]=tgIpfsGatewayProd2
+              [CD_LB_LISTENER_PROD]=arn:aws:elasticloadbalancing:us-east-1:670732250846:listener/app/lbProdIpfsGateway/e19ef47a7991401b/104a0b064d3e1a2e
+              [CD_LB_TG]=arn:aws:elasticloadbalancing:us-east-1:670732250846:targetgroup/tgIpfsGatewayProd/aa14510c71ac1ad2
+              [LOG_GROUP]=/ecs/ipfsGatewayProd
+              [LOG_PREFIX]=ipfsgateprod
+              [AWS_ROLE]=arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GithubActionsTaskDefRegister
+            )
+          fi
 
           for var in "${!vars[@]}"; do
             echo "${var}=${vars[$var]}" >> $GITHUB_ENV
