@@ -27,7 +27,7 @@ jobs:
               [ENV_LOCATION]=s3://envmerclebackend/ipfsgateway/staging.json
               [ECR]=ipfs_gateway_1
               [ECS_CLUSTER]=staging_ipfs_gateway_cluster_1
-              [ECS_SERVICE_NAME]=staging_ipfs_gateway_service_3
+              [ECS_SERVICE_NAME]=staging_ipfs_gateway_service_4
               [CONTAINER_NAME]=staging_ipfs_gateway_container_1
               [REPLICA_COUNT]=1
               [CODEDEPLOY_APP_NAME]=StagingIpfsGateway
