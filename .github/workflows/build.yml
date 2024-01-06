@@ -25,10 +25,11 @@ jobs:
           if [ "${{ github.ref }}" == "refs/heads/cicd_staging" ]; then
             declare -A vars=(
               [ENV_LOCATION]=s3://envmerclebackend/ipfsgateway/staging.json
-              [ECR]=ipfs_gateway
-              [ECS_CLUSTER]=staging_ipfs_gateway_cluster
-              [ECS_SERVICE_NAME]=staging_ipfs_gateway_service_2
-              [CONTAINER_NAME]=staging_ipfs_gateway_container
+              [ECR]=ipfs_gateway_1
+              [ECS_CLUSTER]=staging_ipfs_gateway_cluster_1
+              [ECS_SERVICE_NAME]=staging_ipfs_gateway_service_3
+              [CONTAINER_NAME]=staging_ipfs_gateway_container_1
+              [REPLICA_COUNT]=1
               [CODEDEPLOY_APP_NAME]=StagingIpfsGateway
               [CODEDEPLOY_GROUP_NAME]=StagingIpfsGatewayCDGroup
               [CD_BUCKET_NAME]=mercleecscodedeploy
@@ -36,6 +37,7 @@ jobs:
               [CD_TG_1]=tgIpfsGatewayStaging
               [CD_TG_2]=tgIpfsGatewayStaging2
               [CD_LB_LISTENER_PROD]=arn:aws:elasticloadbalancing:us-east-1:670732250846:listener/app/lbStagingIpfsGateway/2f24a9694b23a460/c9e5adc936cf74be
+              [CD_LB_LISTENER_PROD_80]=arn:aws:elasticloadbalancing:us-east-1:670732250846:listener/app/lbStagingIpfsGateway/2f24a9694b23a460/28b1252ac8ebbd5a
               [CD_LB_TG]=arn:aws:elasticloadbalancing:us-east-1:670732250846:targetgroup/tgIpfsGatewayStaging/30b33a5c2a2ba95d
               [LOG_GROUP]=/ecs/ipfsGatewayStaging
               [LOG_PREFIX]=ipfsgatestaging
@@ -45,9 +47,10 @@ jobs:
             declare -A vars=(
               [ENV_LOCATION]=s3://envmerclebackend/ipfsgateway/prod.json
               [ECR]=ipfs_gateway
-              [ECS_CLUSTER]=prod_ipfs_gateway_cluster
-              [ECS_SERVICE_NAME]=prod_ipfs_gateway_service
-              [CONTAINER_NAME]=prod_ipfs_gateway_container
+              [ECS_CLUSTER]=prod_ipfs_gateway_cluster_1
+              [ECS_SERVICE_NAME]=prod_ipfs_gateway_service_1
+              [CONTAINER_NAME]=prod_ipfs_gateway_container_1
+              [REPLICA_COUNT]=1
               [CODEDEPLOY_APP_NAME]=ProdIpfsGateway
               [CODEDEPLOY_GROUP_NAME]=ProdIpfsGatewayCDGroup
               [CD_BUCKET_NAME]=mercleecscodedeploy
@@ -55,6 +58,7 @@ jobs:
               [CD_TG_1]=tgIpfsGatewayProd
               [CD_TG_2]=tgIpfsGatewayProd2
               [CD_LB_LISTENER_PROD]=arn:aws:elasticloadbalancing:us-east-1:670732250846:listener/app/lbProdIpfsGateway/e19ef47a7991401b/104a0b064d3e1a2e
+              [CD_LB_LISTENER_PROD_80]=arn:aws:elasticloadbalancing:us-east-1:670732250846:listener/app/lbProdIpfsGateway/e19ef47a7991401b/2482046cb3fd6313
               [CD_LB_TG]=arn:aws:elasticloadbalancing:us-east-1:670732250846:targetgroup/tgIpfsGatewayProd/aa14510c71ac1ad2
               [LOG_GROUP]=/ecs/ipfsGatewayProd
               [LOG_PREFIX]=ipfsgateprod
@@ -183,6 +187,7 @@ jobs:
             sed -e "s|<CLUSTER_NAME>|$ECS_CLUSTER|g" .ecs/service-definition-template.json > service-definition.json
             sed -e "s|<SERVICE_NAME>|$ECS_SERVICE_NAME|g" service-definition.json > tmp.json && mv tmp.json service-definition.json
             sed -e "s|<TASK_DEFINITION_ARN>|$TASK_DEF_ARN|g" service-definition.json > tmp.json && mv tmp.json service-definition.json
+            sed -e "s|-123000123|$REPLICA_COUNT|g" service-definition.json > tmp.json && mv tmp.json service-definition.json
             sed -e "s|<CONTAINER_NAME>|$CONTAINER_NAME|g" service-definition.json > tmp.json && mv tmp.json service-definition.json
             sed -e "s|<CD_LB_TG>|$CD_LB_TG|g" service-definition.json > tmp.json && mv tmp.json service-definition.json
             
@@ -224,6 +229,7 @@ jobs:
             sed -e "s|<CD_TG_1>|$CD_TG_1|g" deployment-group.json > tmp.yaml && mv tmp.yaml deployment-group.json
             sed -e "s|<CD_TG_2>|$CD_TG_2|g" deployment-group.json > tmp.yaml && mv tmp.yaml deployment-group.json
             sed -e "s|<CD_LB_LISTENER_PROD>|$CD_LB_LISTENER_PROD|g" deployment-group.json > tmp.yaml && mv tmp.yaml deployment-group.json
+            sed -e "s|<CD_LB_LISTENER_PROD_80>|$CD_LB_LISTENER_PROD_80|g" deployment-group.json > tmp.yaml && mv tmp.yaml deployment-group.json
             sed -e "s|<AWS_ROLE>|$AWS_ROLE|g" deployment-group.json > tmp.yaml && mv tmp.yaml deployment-group.json
             sed -e "s|<ECS_SERVICE_NAME>|$ECS_SERVICE_NAME|g" deployment-group.json > tmp.yaml && mv tmp.yaml deployment-group.json
             sed -e "s|<ECS_CLUSTER>|$ECS_CLUSTER|g" deployment-group.json > tmp.yaml && mv tmp.yaml deployment-group.json
