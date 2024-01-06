@@ -2,7 +2,7 @@
     "cluster": "<CLUSTER_NAME>",
     "serviceName": "<SERVICE_NAME>",
     "taskDefinition": "<TASK_DEFINITION_ARN>",
-    "desiredCount": 1,
+    "desiredCount": -123000123,
     "launchType": "FARGATE",
     "schedulingStrategy": "REPLICA",
     "deploymentController": {
