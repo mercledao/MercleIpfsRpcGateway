@@ -32,7 +32,7 @@
            ],
            "prodTrafficRoute": {
                "listenerArns": [
-                   "<CD_LB_LISTENER_PROD_80>"
+                   "<CD_LB_LISTENER_PROD>"
                ]
            }
          }
