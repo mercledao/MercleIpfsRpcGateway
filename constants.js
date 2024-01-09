@@ -1,9 +1,9 @@
 const values = {
   baseDomain: () => {
-    if (process.env.ENV.startsWith("prod")) return "https://preprod.mercle.xyz";
+    if (process.env.ENV.startsWith("prod")) return "https://api.mercle.xyz";
     else if (process.env.ENV.startsWith("staging")) return "https://api.timesnap.xyz";
     else if (process.env.ENV.startsWith("local")) return "http://127.0.0.1:3001";
-    else return "https://preprod.mercle.xyz";
+    else return "https://api.mercle.xyz";
   },
 };
 
