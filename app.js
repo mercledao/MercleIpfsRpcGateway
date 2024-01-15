@@ -7,25 +7,7 @@ const cors = require("cors");
 
 const app = express();
 
-app.use(
-  cors({
-    origin: [
-      "https://coinhook.xyz",
-      "https://timesnap.xyz",
-      "https://mercle.xyz",
-      "http://timesnap.xyz:3000",
-      "http://localhost:3000",
-      /\.coinhook\.xyz/,
-      /\.timesnap\.xyz/,
-      /\.daohook\.xyz/,
-      /\.mercle\.xyz/,
-    ],
-    credentials: true,
-    // Allow follow-up middleware to override this CORS for options
-    preflightContinue: true,
-  })
-);
-
+app.use(cors());
 
 app.use(logger("dev"));
 app.use(express.json());
