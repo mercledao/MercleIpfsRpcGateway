@@ -1,15 +1,22 @@
 require("dotenv").config();
 const express = require("express");
-const logger = require("morgan");
 const { external } = require("./constants");
 const axios = require("axios");
 const cors = require("cors");
+const expressWinston = require("express-winston");
+const { transports, format } = require("winston");
 
 const app = express();
 
 app.use(cors());
 
-app.use(logger("dev"));
+app.use(
+  expressWinston.logger({
+    transports: [new transports.Console()],
+    format: format.combine(format.json(), format.timestamp()),
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
