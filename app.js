@@ -14,6 +14,23 @@ app.use(
   expressWinston.logger({
     transports: [new transports.Console()],
     format: format.combine(format.json(), format.timestamp()),
+    dynamicMeta: (req, res) => {
+      // Remove query parameters from the URL
+      return {
+        req: {
+          headers: req.headers,
+          httpVersion: req.httpVersion,
+          method: req.method,
+          originalUrl: req.originalUrl,
+          query: req.query,
+          url: req.url,
+        },
+        res: {
+          statusCode: res.statusCode,
+        },
+        responseTime: res.responseTime,
+      };
+    },
   })
 );
 
