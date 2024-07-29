@@ -8,7 +8,7 @@ on:
         description: "Choose the deployment action"
         required: true
         default: "deploy"
-        type: choice
+        type: string
         options:
           - deploy
           - rollback
@@ -16,10 +16,10 @@ on:
         description: "Select the branch for deployment"
         required: true
         default: "main"
-        type: choice
+        type: string
         options:
-          # - cicd_staging
           - cicd_new_infra
+
 
 jobs:
   build-and-deploy:
