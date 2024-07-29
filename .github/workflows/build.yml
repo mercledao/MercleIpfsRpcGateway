@@ -21,7 +21,7 @@ name: BuildInfrastructure
 #           - cicd_new_infra
 on:
   push:
-    branches: [demo, demo1 ,demo2]
+    branches: [cicd_new_infra]
 
 
 jobs:
