@@ -1,24 +1,27 @@
 
 name: BuildInfrastructure
 
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       deployment_action:
+#         description: "Choose the deployment action"
+#         required: true
+#         default: "deploy"
+#         type: choice
+#         options:
+#           - deploy
+#           - rollback
+#       branch:
+#         description: "Select the branch for deployment"
+#         required: true
+#         default: "main"
+#         type: choice
+#         options:
+#           - cicd_new_infra
 on:
-  workflow_dispatch:
-    # inputs:
-    #   deployment_action:
-    #     description: "Choose the deployment action"
-    #     required: true
-    #     default: "deploy"
-    #     type: string
-    #     options:
-    #       - deploy
-    #       - rollback
-    #   branch:
-    #     description: "Select the branch for deployment"
-    #     required: true
-    #     default: "main"
-    #     type: string
-    #     options:
-    #       - cicd_new_infra
+  push:
+    branches: [demo, demo1 ,demo2]
 
 
 jobs:
