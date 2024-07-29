@@ -2,8 +2,24 @@
 name: BuildInfrastructure
 
 on:
-  push:
-    branches: [cicd_new_infra]
+  workflow_dispatch:
+    inputs:
+      deployment_action:
+        description: "Choose the deployment action"
+        required: true
+        default: "deploy"
+        type: choice
+        options:
+          - deploy
+          - rollback
+      branch:
+        description: "Select the branch for deployment"
+        required: true
+        default: "main"
+        type: choice
+        options:
+          # - cicd_staging
+          - cicd_new_infra
 
 jobs:
   build-and-deploy:
@@ -19,12 +35,13 @@ jobs:
           if [ "${{ github.ref }}" == "refs/heads/cicd_new_infra" ]; then
             declare -A vars=(
             
-              [TASK_DEFINITION]=mercle-staging-staging_ipfs_gw
+              [TASK_DEFINITION]=staging-staging_ipfs_gw
+              [ECR]=staging-ipfs_gateway_1
               [CONTAINER_NAME]=staging_ipfs_gateway_container_1
-              [CODEDEPLOY_APP_NAME]=mercle-staging-stagingipfsgatewaycontainer1-code-deploy
-              [CODEDEPLOY_GROUP_NAME]=mercle-staging-stagingipfsgatewaycontainer1-code-deploy
+              [CODEDEPLOY_APP_NAME]=staging-stagingipfsgatewaycontainer1-code-deploy
+              [CODEDEPLOY_GROUP_NAME]=staging-stagingipfsgatewaycontainer1-code-deploy
               [CD_BUCKET_NAME]=mercleecscodedeploy
-              [CD_BUCKET_PATH]=ipfsGateway/staging
+              [CD_BUCKET_PATH]=ipfsGateway/sentinelfox
             )
             for var in "${!vars[@]}"; do
               echo "${var}=${vars[$var]}" >> $GITHUB_ENV
@@ -41,6 +58,23 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+  
+      - name: Login to  ECR Repository 
+        run: |
+          aws ecr get-login-password --region ${{secrets.AWS_REGION}} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID}}.dkr.ecr.${{secrets.AWS_REGION}}.amazonaws.com
+
+      - name: Build and Push Image to AWS ECR
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR }}:${{ github.sha }}
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
 
       - name: Download current ECS task definition
         run: |
@@ -49,8 +83,9 @@ jobs:
         run: |
           # Fetch the current task definition
           aws ecs describe-task-definition --task-definition $TASK_DEFINITION --region ${{ secrets.AWS_REGION }} > task-def.json
-          FULL_IMAGE=670732250846.dkr.ecr.us-east-1.amazonaws.com/mercle_pi_stagging_3:73c223d706b970480db128e2e53e0bf7d4f1e6db
-          jq --arg image "$FULL_IMAGE" '.taskDefinition.containerDefinitions[0].image = $image' task-def.json > updated-task-def.json
+          IMAGE_URI="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/$ECR:${{ github.sha }}"
+
+          jq --arg image "$IMAGE_URI" '.taskDefinition.containerDefinitions[0].image = $image' task-def.json > updated-task-def.json
           jq '.taskDefinition' updated-task-def.json | jq 'del(.taskDefinitionArn, .status, .compatibilities, .requiresAttributes, .revision,.registeredAt,.registeredBy)' > updated-2-task-def.json
           NEW_TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://updated-2-task-def.json --region ${{ secrets.AWS_REGION }} | jq -r '.taskDefinition.taskDefinitionArn')
           echo "Registered Task Definition ARN: $NEW_TASK_DEF_ARN"
