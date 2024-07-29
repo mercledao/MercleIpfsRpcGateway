@@ -1,24 +1,7 @@
 
 name: BuildInfrastructure
 
-# on:
-#   workflow_dispatch:
-#     inputs:
-#       deployment_action:
-#         description: "Choose the deployment action"
-#         required: true
-#         default: "deploy"
-#         type: choice
-#         options:
-#           - deploy
-#           - rollback
-#       branch:
-#         description: "Select the branch for deployment"
-#         required: true
-#         default: "main"
-#         type: choice
-#         options:
-#           - cicd_new_infra
+
 on:
   push:
     branches: [cicd_new_infra]
@@ -38,7 +21,7 @@ jobs:
           if [ "${{ github.ref }}" == "refs/heads/cicd_new_infra" ]; then
             declare -A vars=(
             
-              [TASK_DEFINITION]=staging-staging_ipfs_gw
+              [TASK_DEFINITION]=staging-staging_ipfs_gateway
               [ECR]=staging-ipfs_gateway_1
               [CONTAINER_NAME]=staging_ipfs_gateway_container_1
               [CODEDEPLOY_APP_NAME]=staging-stagingipfsgatewaycontainer1-code-deploy
