@@ -44,7 +44,7 @@ jobs:
               echo "${var}=${vars[$var]}" >> $GITHUB_ENV
               echo "${var}=${vars[$var]}"
             done
-          fi
+          
       - name: Check out code
         uses: actions/checkout@v2
       - name: Set up Docker Buildx
