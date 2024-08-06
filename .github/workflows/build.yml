@@ -37,7 +37,7 @@ jobs:
               [CODEDEPLOY_APP_NAME]=staging-stagingipfsgatewaycontainer1-code-deploy
               [CODEDEPLOY_GROUP_NAME]=staging-stagingipfsgatewaycontainer1-code-deploy
               [CD_BUCKET_NAME]=mercleecscodedeploy
-              [CD_BUCKET_PATH]=ipfsGateway/sentinelfox
+              [CD_BUCKET_PATH]=ipfsGateway/staging
               )
             fi
             for var in "${!vars[@]}"; do
