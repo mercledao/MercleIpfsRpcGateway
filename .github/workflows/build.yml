@@ -29,6 +29,17 @@ jobs:
               [CD_BUCKET_NAME]=mercleecscodedeploy
               [CD_BUCKET_PATH]=ipfsGateway/sentinelfox
             )
+          elif [ "${{ github.ref }}" == "refs/heads/cicd_staging" ]; then
+            declare -A vars=(
+              [TASK_DEFINITION]=staging-staging_ipfs_gateway
+              [ECR]=staging-ipfs_gateway_1
+              [CONTAINER_NAME]=staging_ipfs_gateway_container_1
+              [CODEDEPLOY_APP_NAME]=staging-stagingipfsgatewaycontainer1-code-deploy
+              [CODEDEPLOY_GROUP_NAME]=staging-stagingipfsgatewaycontainer1-code-deploy
+              [CD_BUCKET_NAME]=mercleecscodedeploy
+              [CD_BUCKET_PATH]=ipfsGateway/sentinelfox
+              )
+            fi
             for var in "${!vars[@]}"; do
               echo "${var}=${vars[$var]}" >> $GITHUB_ENV
               echo "${var}=${vars[$var]}"
