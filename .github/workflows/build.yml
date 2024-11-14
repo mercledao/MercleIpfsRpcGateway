@@ -26,6 +26,10 @@ jobs:
               [CD_BUCKET_NAME]=mercleecscodedeploy
               [CD_BUCKET_PATH]=ipfsGateway/new_infra/dev
             )
+            for var in "${!vars[@]}"; do
+              echo "${var}=${vars[$var]}" >> $GITHUB_ENV
+              echo "${var}=${vars[$var]}"
+            done
           elif [ "${{ github.ref }}" == "refs/heads/cicd_staging" ]; then
             declare -A vars=(
               [TASK_DEFINITION]=mercle-staging-ipfs_gw
@@ -36,6 +40,10 @@ jobs:
               [CD_BUCKET_NAME]=mercleecscodedeploy
               [CD_BUCKET_PATH]=ipfsGateway/new_infra/staging
             )
+            for var in "${!vars[@]}"; do
+              echo "${var}=${vars[$var]}" >> $GITHUB_ENV
+              echo "${var}=${vars[$var]}"
+            done
           elif [ "${{ github.ref }}" == "refs/heads/cicd_new_infra_prod" ]; then
             declare -A vars=(
             
@@ -53,7 +61,7 @@ jobs:
             done
           fi
 
-          
+
       - name: Check out code
         uses: actions/checkout@v2
       - name: Set up Docker Buildx
