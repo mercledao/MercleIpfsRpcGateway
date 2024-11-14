@@ -1,11 +1,8 @@
-
 name: BuildInfrastructure
-
 
 on:
   push:
-    branches: [cicd_new_infra, cicd_staging]
-
+    branches: [cicd_new_infra_dev, cicd_new_infra_staging, cicd_new_infra_prod]
 
 jobs:
   build-and-deploy:
@@ -18,33 +15,44 @@ jobs:
     steps:
       - name: Setup Variables for Deployment
         run: |
-          if [ "${{ github.ref }}" == "refs/heads/cicd_new_infra" ]; then
+          if [ "${{ github.ref }}" == "refs/heads/cicd_new_infra_dev" ]; then
             declare -A vars=(
             
-              [TASK_DEFINITION]=staging-staging_ipfs_gateway
-              [ECR]=staging-ipfs_gateway_1
-              [CONTAINER_NAME]=staging_ipfs_gateway_container_1
-              [CODEDEPLOY_APP_NAME]=staging-stagingipfsgatewaycontainer1-code-deploy
-              [CODEDEPLOY_GROUP_NAME]=staging-stagingipfsgatewaycontainer1-code-deploy
+              [TASK_DEFINITION]=mercle-dev-ipfs_gw
+              [ECR]=mercle-dev-ipfs_gateway
+              [CONTAINER_NAME]=ipfs_gateway_container
+              [CODEDEPLOY_APP_NAME]=mercle-dev-ipfsgatewaycontainer-code-deploy
+              [CODEDEPLOY_GROUP_NAME]=mercle-dev-ipfsgatewaycontainer-code-deploy
               [CD_BUCKET_NAME]=mercleecscodedeploy
-              [CD_BUCKET_PATH]=ipfsGateway/sentinelfox
+              [CD_BUCKET_PATH]=ipfsGateway/new_infra/dev
             )
           elif [ "${{ github.ref }}" == "refs/heads/cicd_staging" ]; then
             declare -A vars=(
-              [TASK_DEFINITION]=staging-staging_ipfs_gateway
-              [ECR]=staging-ipfs_gateway_1
-              [CONTAINER_NAME]=staging_ipfs_gateway_container_1
-              [CODEDEPLOY_APP_NAME]=staging-stagingipfsgatewaycontainer1-code-deploy
-              [CODEDEPLOY_GROUP_NAME]=staging-stagingipfsgatewaycontainer1-code-deploy
+              [TASK_DEFINITION]=mercle-staging-ipfs_gw
+              [ECR]=mercle-staging-ipfs_gateway
+              [CONTAINER_NAME]=ipfs_gateway_container
+              [CODEDEPLOY_APP_NAME]=mercle-staging-ipfsgatewaycontainer-code-deploy
+              [CODEDEPLOY_GROUP_NAME]=mercle-staging-ipfsgatewaycontainer-code-deploy
               [CD_BUCKET_NAME]=mercleecscodedeploy
-              [CD_BUCKET_PATH]=ipfsGateway/staging
-              )
-            fi
+              [CD_BUCKET_PATH]=ipfsGateway/new_infra/staging
+            )
+          elif [ "${{ github.ref }}" == "refs/heads/cicd_new_infra_prod" ]; then
+            declare -A vars=(
+            
+              [TASK_DEFINITION]=mercle-prod-ipfs_gw
+              [ECR]=mercle-prod-ipfs_gateway
+              [CONTAINER_NAME]=ipfs_gateway_container
+              [CODEDEPLOY_APP_NAME]=mercle-prod-ipfsgatewaycontainer-code-deploy
+              [CODEDEPLOY_GROUP_NAME]=mercle-prod-ipfsgatewaycontainer-code-deploy
+              [CD_BUCKET_NAME]=mercleecscodedeploy
+              [CD_BUCKET_PATH]=ipfsGateway/new_infra/prod
+            )
             for var in "${!vars[@]}"; do
               echo "${var}=${vars[$var]}" >> $GITHUB_ENV
               echo "${var}=${vars[$var]}"
             done
-          
+          fi
+
       - name: Check out code
         uses: actions/checkout@v2
       - name: Set up Docker Buildx
@@ -70,8 +78,8 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
         with:
           mask-aws-account-id: true
-  
-      - name: Login to  ECR Repository 
+
+      - name: Login to  ECR Repository
         run: |
           aws ecr get-login-password --region ${{secrets.AWS_REGION}} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID}}.dkr.ecr.${{secrets.AWS_REGION}}.amazonaws.com
 
@@ -86,7 +94,6 @@ jobs:
             BUILDKIT_INLINE_CACHE=1
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
-
 
       - name: Download current ECS task definition
         run: |
@@ -106,7 +113,6 @@ jobs:
       - name: Debug Intermediate Task Definition Files
         run: |
           cat updated-2-task-def.json
-       
 
       - name: Install yq
         run: |
@@ -115,7 +121,7 @@ jobs:
           wget https://github.com/mikefarah/yq/releases/download/v4.20.2/yq_linux_amd64 -O $HOME/.local/bin/yq
           chmod +x $HOME/.local/bin/yq
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - name: Update app specification                 
+      - name: Update app specification
         run: |
           aws s3 cp "s3://$CD_BUCKET_NAME/$CD_BUCKET_PATH/appspec.yaml" ./appspec.yaml
           yq eval ".Resources[0].TargetService.Properties.TaskDefinition = \"$TASK_DEF_ARN\"" appspec.yaml > updated-appspec.yaml
