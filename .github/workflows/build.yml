@@ -17,7 +17,6 @@ jobs:
         run: |
           if [ "${{ github.ref }}" == "refs/heads/cicd_new_infra_dev" ]; then
             declare -A vars=(
-            
               [TASK_DEFINITION]=mercle-dev-ipfs_gw
               [ECR]=mercle-dev-ipfs_gateway
               [CONTAINER_NAME]=ipfs_gateway_container
