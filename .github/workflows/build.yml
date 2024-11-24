@@ -29,13 +29,13 @@ jobs:
               echo "${var}=${vars[$var]}" >> $GITHUB_ENV
               echo "${var}=${vars[$var]}"
             done
-          elif [ "${{ github.ref }}" == "refs/heads/cicd_staging" ]; then
+          elif [ "${{ github.ref }}" == "refs/heads/cicd_new_infra_staging" ]; then
             declare -A vars=(
-              [TASK_DEFINITION]=mercle-staging-ipfs_gw
-              [ECR]=mercle-staging-ipfs_gateway
+              [TASK_DEFINITION]=staging-ipfs_gw
+              [ECR]=staging-ipfs_gateway
               [CONTAINER_NAME]=ipfs_gateway_container
-              [CODEDEPLOY_APP_NAME]=mercle-staging-ipfsgatewaycontainer-code-deploy
-              [CODEDEPLOY_GROUP_NAME]=mercle-staging-ipfsgatewaycontainer-code-deploy
+              [CODEDEPLOY_APP_NAME]=staging-ipfsgatewaycontainer-code-deploy
+              [CODEDEPLOY_GROUP_NAME]=staging-ipfsgatewaycontainer-code-deploy
               [CD_BUCKET_NAME]=mercleecscodedeploy
               [CD_BUCKET_PATH]=ipfsGateway/new_infra/staging
             )
