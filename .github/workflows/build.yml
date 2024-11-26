@@ -1,0 +1,169 @@
+name: BuildInfrastructure
+
+on:
+  push:
+    branches: [cicd_new_infra_dev, cicd_new_infra_staging, cicd_new_infra_prod]
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy to ECS
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Setup Variables for Deployment
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/cicd_new_infra_dev" ]; then
+            declare -A vars=(
+              [TASK_DEFINITION]=mercle-dev-ipfs_gw
+              [ECR]=mercle-dev-ipfs_gateway
+              [CONTAINER_NAME]=ipfs_gateway_container
+              [CODEDEPLOY_APP_NAME]=mercle-dev-ipfsgatewaycontainer-code-deploy
+              [CODEDEPLOY_GROUP_NAME]=mercle-dev-ipfsgatewaycontainer-code-deploy
+              [CD_BUCKET_NAME]=mercleecscodedeploy
+              [CD_BUCKET_PATH]=ipfsGateway/new_infra/dev
+            )
+            for var in "${!vars[@]}"; do
+              echo "${var}=${vars[$var]}" >> $GITHUB_ENV
+              echo "${var}=${vars[$var]}"
+            done
+          elif [ "${{ github.ref }}" == "refs/heads/cicd_new_infra_staging" ]; then
+            declare -A vars=(
+              [TASK_DEFINITION]=staging-ipfs_gw
+              [ECR]=staging-ipfs_gateway
+              [CONTAINER_NAME]=ipfs_gateway_container
+              [CODEDEPLOY_APP_NAME]=staging-ipfsgatewaycontainer-code-deploy
+              [CODEDEPLOY_GROUP_NAME]=staging-ipfsgatewaycontainer-code-deploy
+              [CD_BUCKET_NAME]=mercleecscodedeploy
+              [CD_BUCKET_PATH]=ipfsGateway/new_infra/staging
+            )
+            for var in "${!vars[@]}"; do
+              echo "${var}=${vars[$var]}" >> $GITHUB_ENV
+              echo "${var}=${vars[$var]}"
+            done
+          elif [ "${{ github.ref }}" == "refs/heads/cicd_new_infra_prod" ]; then
+            declare -A vars=(
+            
+              [TASK_DEFINITION]=prod-ipfs_gw
+              [ECR]=prod-ipfs_gateway
+              [CONTAINER_NAME]=ipfs_gateway_container
+              [CODEDEPLOY_APP_NAME]=prod-ipfsgatewaycontainer-code-deploy
+              [CODEDEPLOY_GROUP_NAME]=prod-ipfsgatewaycontainer-code-deploy
+              [CD_BUCKET_NAME]=mercleecscodedeploy
+              [CD_BUCKET_PATH]=ipfsGateway/new_infra/prod
+            )
+            for var in "${!vars[@]}"; do
+              echo "${var}=${vars[$var]}" >> $GITHUB_ENV
+              echo "${var}=${vars[$var]}"
+            done
+          fi
+
+
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
+          role-session-name: GitHub-OIDC-TERRAFORM
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-aws-account-id: true
+
+      - name: Login to  ECR Repository
+        run: |
+          aws ecr get-login-password --region ${{secrets.AWS_REGION}} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID}}.dkr.ecr.${{secrets.AWS_REGION}}.amazonaws.com
+
+      - name: Build and Push Image to AWS ECR
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.ECR }}:${{ github.sha }}
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      - name: Download current ECS task definition
+        run: |
+          aws ecs describe-task-definition --task-definition $TASK_DEFINITION --region ${{ secrets.AWS_REGION }} > task-def.json
+      - name: Update task definition version and image tag
+        run: |
+          # Fetch the current task definition
+          aws ecs describe-task-definition --task-definition $TASK_DEFINITION --region ${{ secrets.AWS_REGION }} > task-def.json
+          IMAGE_URI="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/$ECR:${{ github.sha }}"
+
+          jq --arg image "$IMAGE_URI" '.taskDefinition.containerDefinitions[0].image = $image' task-def.json > updated-task-def.json
+          jq '.taskDefinition' updated-task-def.json | jq 'del(.taskDefinitionArn, .status, .compatibilities, .requiresAttributes, .revision,.registeredAt,.registeredBy)' > updated-2-task-def.json
+          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://updated-2-task-def.json --region ${{ secrets.AWS_REGION }} | jq -r '.taskDefinition.taskDefinitionArn')
+          echo "Registered Task Definition ARN: $NEW_TASK_DEF_ARN"
+          echo "TASK_DEF_ARN=$NEW_TASK_DEF_ARN" >> $GITHUB_ENV
+          export "TASK_DEF_ARN=$NEW_TASK_DEF_ARN"
+      - name: Debug Intermediate Task Definition Files
+        run: |
+          cat updated-2-task-def.json
+
+      - name: Install yq
+        run: |
+          # Install yq to a user-writable directory
+          mkdir -p $HOME/.local/bin
+          wget https://github.com/mikefarah/yq/releases/download/v4.20.2/yq_linux_amd64 -O $HOME/.local/bin/yq
+          chmod +x $HOME/.local/bin/yq
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Update app specification
+        run: |
+          aws s3 cp "s3://$CD_BUCKET_NAME/$CD_BUCKET_PATH/appspec.yaml" ./appspec.yaml
+          yq eval ".Resources[0].TargetService.Properties.TaskDefinition = \"$TASK_DEF_ARN\"" appspec.yaml > updated-appspec.yaml
+          aws s3 cp ./updated-appspec.yaml "s3://$CD_BUCKET_NAME/$CD_BUCKET_PATH/appspec.yaml"
+      - name: Display appspec.yaml
+        run: |
+          cat appspec.yaml
+      - name: Create CodeDeploy Deployment
+        run: |
+          # Prepare deployment configuration
+          sed -e "s|<CODEDEPLOY_APP_NAME>|$CODEDEPLOY_APP_NAME|g" .ecs/create-deployment-template.json > tmp.yaml && mv tmp.yaml create-deployment.json
+          sed -e "s|<CODEDEPLOY_GROUP_NAME>|$CODEDEPLOY_GROUP_NAME|g" create-deployment.json > tmp.yaml && mv tmp.yaml create-deployment.json
+          sed -e "s|<CD_BUCKET_NAME>|$CD_BUCKET_NAME|g" create-deployment.json > tmp.yaml && mv tmp.yaml create-deployment.json
+          sed -e "s|<CD_BUCKET_PATH>|$CD_BUCKET_PATH|g" create-deployment.json > tmp.yaml && mv tmp.yaml create-deployment.json
+          # Create deployment
+          DEPLOYMENT_ID=$(aws deploy create-deployment --cli-input-json file://create-deployment.json --output json | jq -r '.deploymentId')
+          echo "Deployment started with ID: $DEPLOYMENT_ID"
+          echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
+      - name: Check Deployment Status
+        run: |
+          while true; do
+            STATUS=$(aws deploy get-deployment --deployment-id $DEPLOYMENT_ID --query 'deploymentInfo.status' --output text)
+            if [ "$STATUS" == "Succeeded" ]; then
+              echo "Deployment successful!"
+              break
+            elif [ "$STATUS" == "Failed" ]; then
+              echo "Deployment failed!"
+              exit 1
+            else
+              echo "Deployment status: $STATUS. Checking again in 30 seconds."
+              sleep 30
+            fi
+          done
+      - name: Clean up Cache
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache-new
+          key: ${{ runner.os }}-buildx-${{ github.sha }}

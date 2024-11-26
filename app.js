@@ -1,40 +1,82 @@
 require("dotenv").config();
 const express = require("express");
-const logger = require("morgan");
-const httpProxy = require("http-proxy");
+const { external } = require("./constants");
+const axios = require("axios");
+const cors = require("cors");
+const expressWinston = require("express-winston");
+const { transports, format } = require("winston");
 
 const app = express();
-const apiProxy = httpProxy.createProxyServer({
-  target: "http://localhost:5001",
-  proxyTimeout: 1000 * 60 * 10,
-  timeout: 1000 * 60 * 10,
-});
-apiProxy.on("error", (err, req, res) => {
-  console.log(err);
-  res.status(500).send(`Proxy Error\n\n${err}`);
-});
 
-app.use(logger("dev"));
+app.use(cors());
+
+app.use(
+  expressWinston.logger({
+    transports: [new transports.Console()],
+    format: format.combine(format.json(), format.timestamp()),
+    dynamicMeta: (req, res) => {
+      // Remove query parameters from the URL
+      return {
+        req: {
+          headers: req.headers,
+          httpVersion: req.httpVersion,
+          method: req.method,
+          originalUrl: req.originalUrl,
+          query: req.query,
+          url: req.url,
+        },
+        res: {
+          statusCode: res.statusCode,
+        },
+        responseTime: res.responseTime,
+      };
+    },
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-const auth = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (authHeader == process.env.IPFS_RPC_API) return next();
-  return res.status(401).send("Unauthorized");
-};
 
 app.get("/", (req, res) => {
   return res.send({ time: Date.now() });
 });
 
 app.get("/ping", (req, res) => {
-  return res.send("pong");
+  return res.send("pong ecs");
 });
 
-app.use(auth);
-app.all("/*", (req, res) => {
-  return apiProxy.web(req, res);
+app.get("/ipfs/:cid", (req, res) => {
+  const url = "https://ipfsnode.mercle.xyz";
+
+  axios({
+    method: "get",
+    url: `${url}/ipfs/${req.params.cid}`,
+    responseType: "stream",
+  })
+    .then((response) => {
+      res.setHeader("Content-Type", response.headers["content-type"]);
+      response.data.pipe(res);
+    })
+    .catch((e) => {
+      console.error(e);
+      res.status(500).send("only mercle ipfs supported");
+    });
+});
+
+app.get("/ipns/:cid", (req, res) => {
+  axios({
+    method: "get",
+    url: external.mercle.ipns(req.params.cid),
+    responseType: "stream",
+  })
+    .then((response) => {
+      res.setHeader("Content-Type", response.headers["content-type"]);
+      response.data.pipe(res);
+    })
+    .catch((e) => {
+      console.error(e);
+      res.status(500).send("only mercle ipfs supported");
+    });
 });
 
 // catch 404 and forward to error handler
