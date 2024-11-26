@@ -46,11 +46,11 @@ jobs:
           elif [ "${{ github.ref }}" == "refs/heads/cicd_new_infra_prod" ]; then
             declare -A vars=(
             
-              [TASK_DEFINITION]=mercle-prod-ipfs_gw
-              [ECR]=mercle-prod-ipfs_gateway
+              [TASK_DEFINITION]=prod-ipfs_gw
+              [ECR]=prod-ipfs_gateway
               [CONTAINER_NAME]=ipfs_gateway_container
-              [CODEDEPLOY_APP_NAME]=mercle-prod-ipfsgatewaycontainer-code-deploy
-              [CODEDEPLOY_GROUP_NAME]=mercle-prod-ipfsgatewaycontainer-code-deploy
+              [CODEDEPLOY_APP_NAME]=prod-ipfsgatewaycontainer-code-deploy
+              [CODEDEPLOY_GROUP_NAME]=prod-ipfsgatewaycontainer-code-deploy
               [CD_BUCKET_NAME]=mercleecscodedeploy
               [CD_BUCKET_PATH]=ipfsGateway/new_infra/prod
             )
