@@ -46,7 +46,7 @@ jobs:
           elif [ "${{ github.ref }}" == "refs/heads/cicd_new_infra_prod" ]; then
             declare -A vars=(
             
-              [TASK_DEFINITION]=prod-ipfs_gw
+              [TASK_DEFINITION]=prod-ipfs_gw_service
               [ECR]=prod-ipfs_gateway
               [CONTAINER_NAME]=ipfs_gateway_container
               [CODEDEPLOY_APP_NAME]=prod-ipfsgatewaycontainer-code-deploy
